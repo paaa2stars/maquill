@@ -1,99 +1,139 @@
-import {App, Editor, MarkdownView, Modal, Notice, Plugin} from 'obsidian';
-import {DEFAULT_SETTINGS, MyPluginSettings, SampleSettingTab} from "./settings";
+import { MarkdownView, Plugin, WorkspaceLeaf } from "obsidian";
+import {
+	MaquillSettings,
+	DEFAULT_SETTINGS,
+	MaquillSettingTab,
+} from "./settings";
+import {
+	InlineCompletionManager,
+	candidateTextState,
+} from "./ui/candidate-text";
+import { ThinkingView, THINKING_VIEW_TYPE } from "./ui/thinking-view";
+import { SelectionToolbar } from "./ui/selection-toolbar";
+import { registerCommands } from "./commands";
+import type { EditorView } from "@codemirror/view";
 
-// Remember to rename these classes and interfaces!
-
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class MaquillPlugin extends Plugin {
+	settings: MaquillSettings;
+	inlineCompletionManager: InlineCompletionManager;
+	selectionToolbar: SelectionToolbar | null = null;
 
 	async onload() {
 		await this.loadSettings();
 
-		// This creates an icon in the left ribbon.
-		this.addRibbonIcon('dice', 'Sample', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
+		// Initialize inline completion manager
+		this.inlineCompletionManager = new InlineCompletionManager(this.app);
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status bar text');
+		// Initialize selection toolbar
+		this.selectionToolbar = new SelectionToolbar(this.app, this.settings);
 
-		// This adds a simple command that can be triggered anywhere
-		this.addCommand({
-			id: 'open-modal-simple',
-			name: 'Open modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			}
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'replace-selected',
-			name: 'Replace selected content',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				editor.replaceSelection('Sample editor command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-modal-complex',
-			name: 'Open modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
+		// Listen for mouse up events to detect text selection
+		this.registerDomEvent(document, "mouseup", () => {
+			if (!this.settings.enableSelectionToolbar) return;
+			const activeView =
+				this.app.workspace.getActiveViewOfType(MarkdownView);
+			if (activeView) {
+				const editor = activeView.editor;
+				setTimeout(() => {
+					// 再次检查设置，因为在 setTimeout 延迟期间设置可能已更改
+					if (!this.settings.enableSelectionToolbar) return;
+					if (editor.somethingSelected()) {
+						this.selectionToolbar?.show(editor, activeView);
+					} else {
+						this.selectionToolbar?.hide();
 					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
-				}
-				return false;
+				}, 10);
 			}
 		});
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			new Notice("Click");
+		// Listen for keyup events (for keyboard selection)
+		this.registerDomEvent(document, "keyup", () => {
+			if (!this.settings.enableSelectionToolbar) return;
+			const activeView =
+				this.app.workspace.getActiveViewOfType(MarkdownView);
+			if (activeView) {
+				const editor = activeView.editor;
+				setTimeout(() => {
+					// 再次检查设置，因为在 setTimeout 延迟期间设置可能已更改
+					if (!this.settings.enableSelectionToolbar) return;
+					if (editor.somethingSelected()) {
+						this.selectionToolbar?.show(editor, activeView);
+					} else {
+						this.selectionToolbar?.hide();
+					}
+				}, 10);
+			}
 		});
 
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+		// 当活动视图改变时隐藏工具栏
+		this.registerEvent(
+			this.app.workspace.on("active-leaf-change", () => {
+				this.selectionToolbar?.hide();
+			})
+		);
 
+		// 当布局变化时隐藏工具栏（包括打开设置等模态框）
+		this.registerEvent(
+			this.app.workspace.on("layout-change", () => {
+				this.selectionToolbar?.hide();
+			})
+		);
+
+		// Register editor extension for candidate text
+		this.registerEditorExtension([candidateTextState]);
+
+		// Register thinking view
+		this.registerView(
+			THINKING_VIEW_TYPE,
+			(leaf: WorkspaceLeaf) => new ThinkingView(leaf)
+		);
+
+		// Register commands
+		registerCommands(this);
+
+		// Settings tab
+		this.addSettingTab(new MaquillSettingTab(this.app, this));
+	}
+
+	/**
+	 * Get CodeMirror EditorView from Obsidian MarkdownView
+	 */
+	getEditorView(view: MarkdownView): EditorView | null {
+		// Access the CodeMirror editor view from Obsidian's view
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+		const editor = (view as any).editor;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		if (editor?.cm) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			return editor.cm as EditorView;
+		}
+		return null;
 	}
 
 	onunload() {
+		// Cleanup
+		if (this.selectionToolbar) {
+			this.selectionToolbar.destroy();
+			this.selectionToolbar = null;
+		}
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<MyPluginSettings>);
+		this.settings = Object.assign(
+			{},
+			DEFAULT_SETTINGS,
+			(await this.loadData()) as Partial<MaquillSettings>
+		);
 	}
 
 	async saveSettings() {
 		await this.saveData(this.settings);
-	}
-}
-
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
-
-	onOpen() {
-		let {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
+		// 刷新工具栏以应用新设置
+		if (this.settings.enableSelectionToolbar) {
+			this.selectionToolbar?.refresh();
+		} else {
+			// 如果禁用，直接调用 refresh 彻底移除 DOM 元素
+			this.selectionToolbar?.refresh();
+		}
 	}
 }

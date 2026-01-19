@@ -6,3 +6,429 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+
+/* Prompt Modal Styles */
+.maquill-description {
+	margin-bottom: 15px;
+}
+
+.maquill-text-area-container {
+	margin-bottom: 15px;
+}
+
+.maquill-text-area {
+	width: 100%;
+	min-height: 100px;
+}
+
+.maquill-button-container {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+}
+
+/* Suggestion Modal Styles */
+.maquill-suggestion-content {
+	padding: 10px;
+	margin-bottom: 15px;
+	background-color: var(--background-secondary);
+	border-radius: 5px;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+	max-height: 300px;
+	overflow-y: auto;
+}
+
+/* Candidate Text Styles */
+.maquill-candidate-text-container {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+}
+
+.maquill-candidate-text {
+	color: var(--text-muted);
+	opacity: 0.5;
+	font-style: normal;
+	pointer-events: none;
+	user-select: none;
+}
+
+.maquill-candidate-buttons {
+	display: inline-flex;
+	gap: 6px;
+	align-items: center;
+}
+
+.maquill-candidate-btn {
+	padding: 2px 8px;
+	font-size: 11px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background: var(--background-secondary);
+	color: var(--text-normal);
+	cursor: pointer;
+	transition: all 0.2s;
+	white-space: nowrap;
+}
+
+.maquill-candidate-btn:hover {
+	background: var(--background-modifier-hover);
+	border-color: var(--interactive-accent);
+}
+
+.maquill-accept-btn:hover {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.maquill-reject-btn:hover {
+	background: #ff4444;
+	color: white;
+}
+
+/* Thinking View Styles */
+.maquill-thinking-view {
+	padding: 16px;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.maquill-thinking-content {
+	flex: 1;
+	overflow-y: auto;
+	padding: 8px;
+	background: var(--background-secondary);
+	border-radius: 4px;
+	font-size: 13px;
+	line-height: 1.6;
+	user-select: text;
+	-webkit-user-select: text;
+	cursor: text;
+}
+
+.maquill-thinking-content p {
+	margin: 4px 0;
+	color: var(--text-muted);
+}
+
+.maquill-thinking-placeholder {
+	color: var(--text-faint);
+	font-style: italic;
+}
+
+.maquill-thinking-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 12px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.maquill-thinking-header h4 {
+	margin: 0;
+	color: var(--text-normal);
+}
+
+.maquill-stop-btn {
+	display: none;
+	padding: 4px 10px;
+	font-size: 12px;
+	border: 1px solid var(--text-error);
+	border-radius: 4px;
+	background: transparent;
+	color: var(--text-error);
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.maquill-stop-btn.is-visible {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.maquill-stop-btn:hover {
+	background: var(--text-error);
+	color: white;
+}
+
+/* Selection Toolbar Styles */
+.maquill-selection-toolbar {
+	position: fixed;
+	z-index: 10;
+	display: flex;
+	gap: 4px;
+	padding: 4px;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.maquill-selection-toolbar.is-hidden {
+	display: none;
+}
+
+.maquill-toolbar-btn {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 8px;
+	font-size: 12px;
+	border: none;
+	border-radius: 4px;
+	background: var(--background-secondary);
+	color: var(--text-normal);
+	cursor: pointer;
+	transition: all 0.2s;
+	white-space: nowrap;
+}
+
+.maquill-toolbar-btn:hover {
+	background: var(--background-modifier-hover);
+}
+
+.maquill-toolbar-icon {
+	font-size: 14px;
+}
+
+.maquill-toolbar-label {
+	font-size: 11px;
+}
+
+/* Result Modal Styles */
+.maquill-result-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.5);
+	z-index: 2000;
+}
+
+.maquill-result-modal {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	z-index: 2001;
+	max-width: 600px;
+	width: 90%;
+}
+
+.maquill-result-content {
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	padding: 20px;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.maquill-result-content h3 {
+	margin: 0 0 12px 0;
+	color: var(--text-normal);
+	font-size: 16px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	padding-bottom: 8px;
+}
+
+.maquill-result-text {
+	margin: 12px 0;
+	padding: 12px;
+	background: var(--background-secondary);
+	border-radius: 4px;
+	color: var(--text-normal);
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	max-height: 300px;
+	overflow-y: auto;
+	user-select: text;
+	-webkit-user-select: text;
+	cursor: text;
+}
+
+.maquill-result-close {
+	padding: 6px 16px;
+	border: none;
+	border-radius: 4px;
+	background: var(--background-secondary);
+	color: var(--text-normal);
+	cursor: pointer;
+	border: 1px solid var(--background-modifier-border);
+}
+
+.maquill-result-close:hover {
+	background: var(--background-modifier-hover);
+}
+
+.maquill-result-buttons {
+	display: flex;
+	gap: 8px;
+	justify-content: flex-end;
+	margin-top: 12px;
+}
+
+.maquill-word-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 12px 0;
+	padding: 12px;
+	background: var(--background-secondary);
+	border-radius: 4px;
+}
+
+.maquill-word-item {
+	padding: 6px 12px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background: var(--background-primary);
+	color: var(--text-normal);
+	cursor: pointer;
+	transition: all 0.2s;
+	font-size: 14px;
+}
+
+.maquill-word-item:hover {
+	background: var(--background-modifier-hover);
+	border-color: var(--interactive-accent);
+}
+
+.maquill-word-item.is-selected {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-color: var(--interactive-accent);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.maquill-word-item-selectable {
+	user-select: text;
+	-webkit-user-select: text;
+	cursor: pointer;
+}
+
+.maquill-issues-title {
+	font-weight: 600;
+	color: var(--text-error);
+	margin: 12px 0 8px 0;
+	font-size: 14px;
+}
+
+.maquill-issues-list {
+	margin: 0 0 12px 0;
+	padding-left: 20px;
+	color: var(--text-muted);
+	font-size: 13px;
+	line-height: 1.6;
+}
+
+.maquill-issues-list li {
+	margin: 4px 0;
+}
+
+.maquill-corrected-title {
+	font-weight: 600;
+	color: var(--text-normal);
+	margin: 12px 0 8px 0;
+	font-size: 14px;
+}
+
+.maquill-corrected-text {
+	background: var(--background-primary);
+	border: 2px solid var(--interactive-accent);
+}
+
+.maquill-no-errors {
+	color: var(--text-success);
+	font-weight: 500;
+	text-align: center;
+}
+
+.maquill-result-apply {
+	padding: 6px 16px;
+	border: none;
+	border-radius: 4px;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	cursor: pointer;
+	font-weight: 500;
+}
+
+.maquill-result-apply:hover {
+	opacity: 0.9;
+	transform: translateY(-1px);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.maquill-result-apply.is-disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.maquill-result-apply.is-disabled:hover {
+	opacity: 0.5;
+	transform: none;
+	box-shadow: none;
+}
+
+/* Settings - Toolbar Actions Drag & Drop */
+.maquill-toolbar-actions {
+	margin-top: 8px;
+}
+
+.maquill-toolbar-action-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	margin-bottom: 4px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	cursor: grab;
+	transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.maquill-toolbar-action-item:hover {
+	background: var(--background-modifier-hover);
+}
+
+.maquill-toolbar-action-item.dragging {
+	opacity: 0.4;
+	cursor: grabbing;
+	border-color: var(--interactive-accent);
+	background: var(--background-modifier-hover);
+}
+
+.maquill-drag-handle {
+	color: var(--text-muted);
+	cursor: grab;
+	user-select: none;
+	font-size: 14px;
+	line-height: 1;
+}
+
+.maquill-action-label {
+	flex: 1;
+	font-size: 14px;
+	color: var(--text-normal);
+}
+
+.maquill-toolbar-action-item .setting-item {
+	border: none;
+	padding: 0;
+	margin: 0;
+}
+
+.maquill-toolbar-action-item .setting-item-info {
+	display: none;
+}
+
+.maquill-toolbar-action-item .setting-item-control {
+	padding: 0;
+}

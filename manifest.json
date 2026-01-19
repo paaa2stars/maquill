@@ -1,11 +1,11 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
-	"version": "1.0.0",
-	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"id": "maquill",
+	"name": "Magic Quill",
+	"version": "0.1.0",
+	"minAppVersion": "1.8.7",
+	"description": "An LLM writing assistant that helps your ideas come to life.",
+	"author": "paaa",
+	"authorUrl": "https://paaa.io",
+	"fundingUrl": "https://paaa.io/donate",
 	"isDesktopOnly": false
 }
