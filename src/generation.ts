@@ -8,7 +8,7 @@ import {
 } from "obsidian";
 import type { EditorView } from "@codemirror/view";
 import type { MaquillSettings } from "./settings";
-import { callZhipuCompletionStream } from "./zhipu-service";
+import type { LLMService } from "./main";
 import { InlineCompletionManager } from "./ui/candidate-text";
 import { ThinkingView, THINKING_VIEW_TYPE } from "./ui/thinking-view";
 import { PromptModal } from "./ui/prompt-modal";
@@ -18,7 +18,7 @@ import { t } from "./utils/i18n";
 /**
  * System prompt for text generation
  */
-const SYSTEM_PROMPT = `
+export const GENERATION_SYSTEM_PROMPT = `
 你是一个乐于助人的写作助手，给定【前文】、【后文】和【写作要求】，生成符合要求的内容。
 
 ## 输出要求
@@ -30,7 +30,7 @@ const SYSTEM_PROMPT = `
 /**
  * Build user prompt for text generation
  */
-function buildGenerationUserPrompt(
+export function buildGenerationUserPrompt(
 	prefix: string,
 	postfix: string,
 	userInstruction: string
@@ -207,7 +207,8 @@ export function generate(
 	app: App,
 	settings: MaquillSettings,
 	completionManager: InlineCompletionManager,
-	getEditorView: (view: MarkdownView) => EditorView | null
+	getEditorView: (view: MarkdownView) => EditorView | null,
+	service: LLMService
 ): void {
 	// Show prompt modal first
 	new PromptModal(app, (userPrompt) => {
@@ -232,7 +233,7 @@ export function generate(
 				}
 
 				// Validate API configuration
-				if (!settings.apiKey) {
+				if (settings.provider === "zhipu" && !settings.apiKey) {
 					new Notice(t("noticeConfigureApiKey"));
 					return;
 				}
@@ -260,30 +261,12 @@ export function generate(
 				let wasStopped = false;
 
 				try {
-					await callZhipuCompletionStream(
-						settings.apiKey,
-						{
-							model: settings.generationModel,
-							messages: [
-								{
-									role: "system",
-									content: SYSTEM_PROMPT,
-								},
-								{
-									role: "user",
-									content: buildGenerationUserPrompt(
-										prefix,
-										postfix,
-										userPrompt
-									),
-								},
-							],
-						},
-						(thinkingChunk) => {
-							// Store and display thinking content
-							thinkingContent += thinkingChunk;
-							thinkingView.appendThinking(thinkingChunk);
-						},
+					await service.generateStream(
+						buildGenerationUserPrompt(
+							prefix,
+							postfix,
+							userPrompt
+						),
 						(contentChunk) => {
 							// Accumulate content
 							generatedContent += contentChunk;

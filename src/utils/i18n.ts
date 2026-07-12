@@ -34,6 +34,17 @@ type Translations = {
 	settingsGenerationSavePathDesc: string;
 	settingsGenerationSavePathPlaceholder: string;
 
+	// Settings - Provider
+	provider: string;
+	providerDesc: string;
+	providerZhipu: string;
+	providerLmstudio: string;
+	lmstudioBaseUrl: string;
+	lmstudioBaseUrlDesc: string;
+	lmstudioModel: string;
+	lmstudioModelDesc: string;
+	lmstudioNoModel: string;
+
 	// Settings - Toolbar
 	settingsEnableSelectionToolbar: string;
 	settingsEnableSelectionToolbarDesc: string;
@@ -62,6 +73,11 @@ type Translations = {
 	toolbarApplyCorrection: string;
 	toolbarNoErrors: string;
 	toolbarIssuesFound: string;
+
+	// Fetch models
+	fetchModels: string;
+	fetchModelsSuccess: string;
+	fetchModelsFailed: string;
 
 	// Notice messages
 	noticeGeneratingCompletion: string;
@@ -129,6 +145,17 @@ const ZH_CN: Translations = {
 	settingsGenerationSavePathDesc: "保存生成记录的文件夹路径，留空则不保存",
 	settingsGenerationSavePathPlaceholder: "例如：AI/generation",
 
+	// Settings - Provider
+	provider: "模型提供者",
+	providerDesc: "选择 AI 模型提供商",
+	providerZhipu: "智谱 (Zhipu)",
+	providerLmstudio: "LM Studio",
+	lmstudioBaseUrl: "LM Studio 地址",
+	lmstudioBaseUrlDesc: "LM Studio API 服务地址",
+	lmstudioModel: "LM Studio 模型",
+	lmstudioModelDesc: "输入 LM Studio 中加载的模型名称",
+	lmstudioNoModel: "请在设置中配置 LM Studio 模型名称",
+
 	// Settings - Toolbar
 	settingsEnableSelectionToolbar: "启用选择工具栏",
 	settingsEnableSelectionToolbarDesc: "选中文本时显示工具栏",
@@ -157,6 +184,11 @@ const ZH_CN: Translations = {
 	toolbarApplyCorrection: "应用修正",
 	toolbarNoErrors: "无语法错误",
 	toolbarIssuesFound: "发现问题",
+
+	// Fetch models
+	fetchModels: "获取模型列表",
+	fetchModelsSuccess: "已获取 {count} 个模型",
+	fetchModelsFailed: "获取模型列表失败",
 
 	// Notice messages
 	noticeGeneratingCompletion: "生成补全中...",
@@ -226,6 +258,17 @@ const EN: Translations = {
 		"Folder path to save generation history, leave empty to disable",
 	settingsGenerationSavePathPlaceholder: "e.g., AI/generation",
 
+	// Settings - Provider
+	provider: "Model provider",
+	providerDesc: "Select AI model provider",
+	providerZhipu: "Zhipu",
+	providerLmstudio: "LM Studio",
+	lmstudioBaseUrl: "LM Studio base URL",
+	lmstudioBaseUrlDesc: "LM Studio API service address",
+	lmstudioModel: "LM Studio model",
+	lmstudioModelDesc: "Enter the model name loaded in LM Studio",
+	lmstudioNoModel: "Please configure LM Studio model name in settings",
+
 	// Settings - Toolbar
 	settingsEnableSelectionToolbar: "Enable selection toolbar",
 	settingsEnableSelectionToolbarDesc: "Show toolbar when text is selected",
@@ -254,6 +297,11 @@ const EN: Translations = {
 	toolbarApplyCorrection: "Apply Correction",
 	toolbarNoErrors: "No grammar errors",
 	toolbarIssuesFound: "Issues Found",
+
+	// Fetch models
+	fetchModels: "Fetch models",
+	fetchModelsSuccess: "Fetched {count} models",
+	fetchModelsFailed: "Failed to fetch models",
 
 	// Notice messages
 	noticeGeneratingCompletion: "Generating completion...",

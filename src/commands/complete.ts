@@ -1,9 +1,10 @@
 import { Editor, MarkdownView } from "obsidian";
 import type MaquillPlugin from "../main";
+import type { LLMService } from "../main";
 import * as Completion from "../completion";
 import { t } from "../utils/i18n";
 
-export const completeCommand = (plugin: MaquillPlugin) => {
+export const completeCommand = (plugin: MaquillPlugin, service: LLMService) => {
 	const { app, settings, inlineCompletionManager } = plugin;
 
 	plugin.addCommand({
@@ -16,7 +17,8 @@ export const completeCommand = (plugin: MaquillPlugin) => {
 				app,
 				settings,
 				inlineCompletionManager,
-				plugin.getEditorView.bind(plugin)
+				plugin.getEditorView.bind(plugin),
+				service
 			);
 		},
 	});

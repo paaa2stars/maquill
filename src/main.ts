@@ -3,6 +3,7 @@ import {
 	MaquillSettings,
 	DEFAULT_SETTINGS,
 	MaquillSettingTab,
+	type ModelProvider,
 } from "./settings";
 import {
 	InlineCompletionManager,
@@ -11,7 +12,170 @@ import {
 import { ThinkingView, THINKING_VIEW_TYPE } from "./ui/thinking-view";
 import { SelectionToolbar } from "./ui/selection-toolbar";
 import { registerCommands } from "./commands";
+import { callZhipuCompletion, callZhipuCompletionStream, type ZhipuModel } from "./zhipu-service";
+import { createLmStudioService, postJson } from "./lmstudio-service";
+import {
+	COMPLETION_SYSTEM_PROMPT,
+	buildCompletionUserPrompt,
+} from "./completion";
+import { GENERATION_SYSTEM_PROMPT } from "./generation";
 import type { EditorView } from "@codemirror/view";
+
+type OnChunk = (chunk: string) => void;
+
+type ChatMessage = { role: "system" | "user"; content: string };
+
+export type LLMService = {
+	generate: {
+		(prompt: string): Promise<string>;
+		(prompt: string, onChunk: OnChunk): Promise<void>;
+	};
+	generateStream: (
+		prompt: string,
+		onChunk: OnChunk,
+		signal?: AbortSignal
+	) => Promise<void>;
+	complete: {
+		(prefix: string, suffix: string): Promise<string>;
+		(prefix: string, suffix: string, onChunk: OnChunk): Promise<void>;
+	};
+	completeStream: (
+		prefix: string,
+		suffix: string,
+		onChunk: OnChunk,
+		signal?: AbortSignal
+	) => Promise<void>;
+	chat: (messages: ChatMessage[], model: string) => Promise<string>;
+};
+
+function createService(
+	provider: ModelProvider,
+	settings: MaquillSettings
+): LLMService {
+	if (provider === "lmstudio") {
+		const lm = createLmStudioService(
+			settings.lmstudioBaseUrl,
+			settings.lmstudioModel
+		);
+		return {
+			generate: lm.generate,
+			generateStream: lm.generateStream,
+			complete: lm.complete,
+			completeStream: lm.completeStream,
+			chat: async (messages: ChatMessage[], _model: string) => {
+				const data = await postJson<{
+					choices: Array<{ message?: { content?: string } }>;
+				}>(
+					`${settings.lmstudioBaseUrl}/v1/chat/completions`,
+					{ model: settings.lmstudioModel, messages }
+				);
+				return data.choices[0]?.message?.content ?? "";
+			},
+		};
+	}
+
+	// Zhipu provider
+	return {
+		generate: async (prompt: string, onChunk?: OnChunk): Promise<string | void> => {
+			const messages = [
+				{ role: "system" as const, content: GENERATION_SYSTEM_PROMPT },
+				{ role: "user" as const, content: prompt },
+			];
+			if (onChunk) {
+				await callZhipuCompletionStream(
+					settings.apiKey,
+					{ model: settings.generationModel, messages },
+					() => {},
+					onChunk
+				);
+				return;
+			}
+			const data = await callZhipuCompletion(settings.apiKey, {
+				model: settings.generationModel,
+				messages,
+			});
+			return data.choices[0]?.message?.content ?? "";
+		},
+		generateStream: async (
+			prompt: string,
+			onChunk: OnChunk,
+			signal?: AbortSignal
+		) => {
+			await callZhipuCompletionStream(
+				settings.apiKey,
+				{
+					model: settings.generationModel,
+					messages: [
+						{ role: "system" as const, content: GENERATION_SYSTEM_PROMPT },
+						{ role: "user" as const, content: prompt },
+					],
+				},
+				() => {},
+				onChunk,
+				signal
+			);
+		},
+		complete: async (prefix: string, suffix: string, onChunk?: OnChunk): Promise<string | void> => {
+			const messages = [
+				{ role: "system" as const, content: COMPLETION_SYSTEM_PROMPT },
+				{ role: "user" as const, content: buildCompletionUserPrompt(prefix, suffix) },
+			];
+			if (onChunk) {
+				await callZhipuCompletionStream(
+					settings.apiKey,
+					{
+						model: settings.completionModel,
+						messages,
+						thinking: { type: "disabled" },
+						max_tokens: 1024,
+					},
+					() => {},
+					onChunk
+				);
+				return;
+			}
+			const data = await callZhipuCompletion(settings.apiKey, {
+				model: settings.completionModel,
+				messages,
+				thinking: { type: "disabled" },
+				max_tokens: 1024,
+			});
+			return data.choices[0]?.message?.content ?? "";
+		},
+		completeStream: async (
+			prefix: string,
+			suffix: string,
+			onChunk: OnChunk,
+			signal?: AbortSignal
+		) => {
+			await callZhipuCompletionStream(
+				settings.apiKey,
+				{
+					model: settings.completionModel,
+					messages: [
+						{ role: "system" as const, content: COMPLETION_SYSTEM_PROMPT },
+						{ role: "user" as const, content: buildCompletionUserPrompt(prefix, suffix) },
+					],
+					thinking: { type: "disabled" },
+					max_tokens: 1024,
+				},
+				() => {},
+				onChunk,
+				signal
+			);
+		},
+		chat: async (messages: ChatMessage[], model: string) => {
+			const data = await callZhipuCompletion(settings.apiKey, {
+				model: model as ZhipuModel,
+				messages,
+				thinking: { type: "disabled" },
+			});
+			return data.choices[0]?.message?.content ?? "";
+		},
+	} as LLMService;
+}
+
+export type { ChatMessage };
 
 export default class MaquillPlugin extends Plugin {
 	settings: MaquillSettings;
@@ -25,7 +189,8 @@ export default class MaquillPlugin extends Plugin {
 		this.inlineCompletionManager = new InlineCompletionManager(this.app);
 
 		// Initialize selection toolbar
-		this.selectionToolbar = new SelectionToolbar(this.app, this.settings);
+		const service = createService(this.settings.provider, this.settings);
+		this.selectionToolbar = new SelectionToolbar(this.app, this.settings, service);
 
 		// Listen for mouse up events to detect text selection
 		this.registerDomEvent(document, "mouseup", () => {
@@ -89,7 +254,7 @@ export default class MaquillPlugin extends Plugin {
 		);
 
 		// Register commands
-		registerCommands(this);
+		registerCommands(this, service);
 
 		// Settings tab
 		this.addSettingTab(new MaquillSettingTab(this.app, this));

@@ -1,5 +1,5 @@
 import type { MaquillSettings } from "./settings";
-import { callZhipuCompletion } from "./zhipu-service";
+import type { LLMService } from "./main";
 import { getLanguageName } from "./utils/language";
 
 /**
@@ -128,19 +128,18 @@ function parseArrayResponse(response: string): string[] {
  */
 export async function getSynonyms(
 	text: string,
-	settings: MaquillSettings
+	settings: MaquillSettings,
+	service: LLMService
 ): Promise<string[]> {
-	const response = await callZhipuCompletion(settings.apiKey, {
-		model: settings.completionModel,
-		messages: [
+	const response = await service.chat(
+		[
 			{ role: "system", content: getSynonymSystemPrompt() },
 			{ role: "user", content: text },
 		],
-		thinking: { type: "disabled" },
-	});
+		settings.completionModel
+	);
 
-	const content = response.choices[0]?.message?.content || "";
-	return parseArrayResponse(content);
+	return parseArrayResponse(response);
 }
 
 /**
@@ -148,19 +147,18 @@ export async function getSynonyms(
  */
 export async function getAntonyms(
 	text: string,
-	settings: MaquillSettings
+	settings: MaquillSettings,
+	service: LLMService
 ): Promise<string[]> {
-	const response = await callZhipuCompletion(settings.apiKey, {
-		model: settings.completionModel,
-		messages: [
+	const response = await service.chat(
+		[
 			{ role: "system", content: getAntonymSystemPrompt() },
 			{ role: "user", content: text },
 		],
-		thinking: { type: "disabled" },
-	});
+		settings.completionModel
+	);
 
-	const content = response.choices[0]?.message?.content || "";
-	return parseArrayResponse(content);
+	return parseArrayResponse(response);
 }
 
 /**
@@ -168,21 +166,21 @@ export async function getAntonyms(
  */
 export async function translate(
 	text: string,
-	settings: MaquillSettings
+	settings: MaquillSettings,
+	service: LLMService
 ): Promise<string> {
-	const response = await callZhipuCompletion(settings.apiKey, {
-		model: settings.completionModel,
-		messages: [
+	const response = await service.chat(
+		[
 			{
 				role: "system",
 				content: getTranslateSystemPrompt(settings),
 			},
 			{ role: "user", content: text },
 		],
-		thinking: { type: "disabled" },
-	});
+		settings.completionModel
+	);
 
-	return response.choices[0]?.message?.content || "Translation failed";
+	return response || "Translation failed";
 }
 
 /**
@@ -190,18 +188,18 @@ export async function translate(
  */
 export async function explain(
 	text: string,
-	settings: MaquillSettings
+	settings: MaquillSettings,
+	service: LLMService
 ): Promise<string> {
-	const response = await callZhipuCompletion(settings.apiKey, {
-		model: settings.generationModel,
-		messages: [
+	const response = await service.chat(
+		[
 			{ role: "system", content: getExplainSystemPrompt(settings) },
 			{ role: "user", content: text },
 		],
-		thinking: { type: "disabled" },
-	});
+		settings.completionModel
+	);
 
-	return response.choices[0]?.message?.content || "Explanation failed";
+	return response || "Explanation failed";
 }
 
 /**
@@ -209,21 +207,19 @@ export async function explain(
  */
 export async function grammarCheck(
 	text: string,
-	settings: MaquillSettings
+	settings: MaquillSettings,
+	service: LLMService
 ): Promise<GrammarCheckResult> {
-	const response = await callZhipuCompletion(settings.apiKey, {
-		model: settings.generationModel,
-		messages: [
+	const content = await service.chat(
+		[
 			{
 				role: "system",
 				content: getGrammarCheckSystemPrompt(settings),
 			},
 			{ role: "user", content: text },
 		],
-		thinking: { type: "disabled" },
-	});
-
-	const content = response.choices[0]?.message?.content || "";
+		settings.completionModel
+	);
 
 	// Try to parse JSON response
 	try {

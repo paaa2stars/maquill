@@ -1,6 +1,7 @@
 import type { App, Editor } from "obsidian";
 import { Notice, MarkdownView } from "obsidian";
 import type { MaquillSettings } from "../settings";
+import type { LLMService } from "../main";
 import { t } from "../utils/i18n";
 import { showResult } from "./result-modal";
 import * as ToolbarActions from "../toolbar-actions";
@@ -14,7 +15,8 @@ export type ToolbarActionConfig = {
 	execute: (
 		text: string,
 		app: App,
-		settings: MaquillSettings
+		settings: MaquillSettings,
+		service: LLMService
 	) => Promise<string | string[] | GrammarCheckResult>;
 };
 
@@ -27,40 +29,40 @@ export const TOOLBAR_ACTIONS: Record<ToolbarAction, ToolbarActionConfig> = {
 		label: t("toolbarActionSynonym"),
 		processingMessage: t("toolbarProcessingSynonym"),
 		icon: "≈",
-		execute: (text: string, _app: App, settings: MaquillSettings) =>
-			ToolbarActions.getSynonyms(text, settings),
+		execute: (text: string, _app: App, settings: MaquillSettings, service: LLMService) =>
+			ToolbarActions.getSynonyms(text, settings, service),
 	},
 	antonym: {
 		id: "antonym",
 		label: t("toolbarActionAntonym"),
 		processingMessage: t("toolbarProcessingAntonym"),
 		icon: "≠",
-		execute: (text: string, _app: App, settings: MaquillSettings) =>
-			ToolbarActions.getAntonyms(text, settings),
+		execute: (text: string, _app: App, settings: MaquillSettings, service: LLMService) =>
+			ToolbarActions.getAntonyms(text, settings, service),
 	},
 	translate: {
 		id: "translate",
 		label: t("toolbarActionTranslate"),
 		processingMessage: t("toolbarProcessingTranslate"),
 		icon: "🌐",
-		execute: (text: string, _app: App, settings: MaquillSettings) =>
-			ToolbarActions.translate(text, settings),
+		execute: (text: string, _app: App, settings: MaquillSettings, service: LLMService) =>
+			ToolbarActions.translate(text, settings, service),
 	},
 	explain: {
 		id: "explain",
 		label: t("toolbarActionExplain"),
 		processingMessage: t("toolbarProcessingExplain"),
 		icon: "?",
-		execute: (text: string, _app: App, settings: MaquillSettings) =>
-			ToolbarActions.explain(text, settings),
+		execute: (text: string, _app: App, settings: MaquillSettings, service: LLMService) =>
+			ToolbarActions.explain(text, settings, service),
 	},
 	grammarCheck: {
 		id: "grammarCheck",
 		label: t("toolbarActionGrammarCheck"),
 		processingMessage: t("toolbarProcessingGrammarCheck"),
 		icon: "✓",
-		execute: (text: string, _app: App, settings: MaquillSettings) =>
-			ToolbarActions.grammarCheck(text, settings),
+		execute: (text: string, _app: App, settings: MaquillSettings, service: LLMService) =>
+			ToolbarActions.grammarCheck(text, settings, service),
 	},
 };
 
@@ -70,14 +72,16 @@ export const TOOLBAR_ACTIONS: Record<ToolbarAction, ToolbarActionConfig> = {
 export class SelectionToolbar {
 	private app: App;
 	private settings: MaquillSettings;
+	private service: LLMService;
 	private toolbar: HTMLElement | null = null;
 	private hideTimeout: number | null = null;
 	private focusListener: ((e: FocusEvent) => void) | null = null;
 	private mutationObserver: MutationObserver | null = null;
 
-	constructor(app: App, settings: MaquillSettings) {
+	constructor(app: App, settings: MaquillSettings, service: LLMService) {
 		this.app = app;
 		this.settings = settings;
+		this.service = service;
 	}
 
 	/**
@@ -245,8 +249,8 @@ export class SelectionToolbar {
 			return;
 		}
 
-		// Validate API key
-		if (!this.settings.apiKey) {
+		// Validate API key (only required for zhipu provider)
+		if (this.settings.provider === "zhipu" && !this.settings.apiKey) {
 			new Notice(t("toolbarNoApiKey"));
 			return;
 		}
@@ -258,7 +262,8 @@ export class SelectionToolbar {
 			const result = await action.execute(
 				selectedText,
 				this.app,
-				this.settings
+				this.settings,
+				this.service
 			);
 			notice.hide();
 

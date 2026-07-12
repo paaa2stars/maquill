@@ -1,6 +1,7 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import type MaquillPlugin from "./main";
 import { ZHIPU_MODEL_LIST, type ZhipuModel } from "./zhipu-service";
+import { fetchLmStudioModels } from "./lmstudio-service";
 import { TOOLBAR_ACTIONS } from "./ui/selection-toolbar";
 import { t } from "./utils/i18n";
 import {
@@ -10,7 +11,10 @@ import {
 import { FolderSuggest } from "./ui/path-suggest";
 import type { ToolbarAction } from "./toolbar-actions";
 
+export type ModelProvider = "zhipu" | "lmstudio";
+
 export type MaquillSettings = {
+	provider: ModelProvider;
 	apiKey: string;
 	completionModel: ZhipuModel;
 	generationModel: ZhipuModel;
@@ -19,9 +23,12 @@ export type MaquillSettings = {
 	responseLanguage: LanguageOption;
 	translationTargetLanguage: LanguageOption;
 	generationSavePath: string;
+	lmstudioBaseUrl: string;
+	lmstudioModel: string;
 };
 
 export const DEFAULT_SETTINGS: MaquillSettings = {
+	provider: "lmstudio",
 	apiKey: "",
 	completionModel: "glm-4.7",
 	generationModel: "glm-4.7",
@@ -36,6 +43,8 @@ export const DEFAULT_SETTINGS: MaquillSettings = {
 	responseLanguage: "follow-display",
 	translationTargetLanguage: "follow-display",
 	generationSavePath: "generation_history",
+	lmstudioBaseUrl: "http://localhost:1234",
+	lmstudioModel: "",
 };
 
 export class MaquillSettingTab extends PluginSettingTab {
@@ -51,57 +60,176 @@ export class MaquillSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
+		// Provider selection
+		new Setting(containerEl)
+			.setName(t("provider"))
+			.setDesc(t("providerDesc"))
+			.addDropdown((dropdown) => {
+				dropdown
+					.addOption("zhipu", t("providerZhipu"))
+					.addOption("lmstudio", t("providerLmstudio"))
+					.setValue(this.plugin.settings.provider)
+					.onChange(async (value) => {
+						this.plugin.settings.provider =
+							value as ModelProvider;
+						await this.plugin.saveSettings();
+						this.display();
+					});
+			});
+
+		const isZhipu = this.plugin.settings.provider === "zhipu";
+		const isLmstudio = this.plugin.settings.provider === "lmstudio";
+
 		new Setting(containerEl)
 			.setName(t("settingsLanguageModelConfig"))
 			.setHeading();
 
-		// API Key
-		new Setting(containerEl)
-			.setName(t("settingsApiKey"))
-			.setDesc(t("settingsApiKeyDesc"))
-			.addText((text) => {
-				text.inputEl.type = "password";
-				text.setPlaceholder(t("settingsApiKeyPlaceholder"))
-					.setValue(this.plugin.settings.apiKey)
+		// --- Zhipu-specific settings ---
+		if (isZhipu) {
+			// API Key
+			new Setting(containerEl)
+				.setName(t("settingsApiKey"))
+				.setDesc(t("settingsApiKeyDesc"))
+				.addText((text) => {
+					text.inputEl.type = "password";
+					text.setPlaceholder(t("settingsApiKeyPlaceholder"))
+						.setValue(this.plugin.settings.apiKey)
+						.onChange(async (value) => {
+							this.plugin.settings.apiKey = value;
+							await this.plugin.saveSettings();
+						});
+				});
+
+			// Completion model
+			new Setting(containerEl)
+				.setName(t("settingsCompletionModel"))
+				.setDesc(t("settingsCompletionModelDesc"))
+				.addDropdown((dropdown) => {
+					for (const model of ZHIPU_MODEL_LIST) {
+						dropdown.addOption(model, model);
+					}
+					dropdown
+						.setValue(this.plugin.settings.completionModel)
+						.onChange(async (value) => {
+							this.plugin.settings.completionModel =
+								value as ZhipuModel;
+							await this.plugin.saveSettings();
+						});
+				});
+
+			// Generation model
+			new Setting(containerEl)
+				.setName(t("settingsGenerationModel"))
+				.setDesc(t("settingsGenerationModelDesc"))
+				.addDropdown((dropdown) => {
+					for (const model of ZHIPU_MODEL_LIST) {
+						dropdown.addOption(model, model);
+					}
+					dropdown
+						.setValue(this.plugin.settings.generationModel)
+						.onChange(async (value) => {
+							this.plugin.settings.generationModel =
+								value as ZhipuModel;
+							await this.plugin.saveSettings();
+						});
+				});
+		}
+
+		// --- LM Studio-specific settings ---
+		if (isLmstudio) {
+			// Base URL
+			new Setting(containerEl)
+				.setName(t("lmstudioBaseUrl"))
+				.setDesc(t("lmstudioBaseUrlDesc"))
+				.addText((text) => {
+					text.setValue(this.plugin.settings.lmstudioBaseUrl)
+						.onChange(async (value) => {
+							this.plugin.settings.lmstudioBaseUrl = value;
+							await this.plugin.saveSettings();
+						});
+				});
+
+			// Model selection with fetch button
+			const lmstudioModelSetting = new Setting(containerEl)
+				.setName(t("lmstudioModel"))
+				.setDesc(t("lmstudioModelDesc"));
+
+			// Store dropdown reference to update options
+			let modelDropdown: { selectEl: HTMLSelectElement } | null = null;
+
+			lmstudioModelSetting.addDropdown((dropdown) => {
+				modelDropdown = dropdown;
+				// Add current value if not empty
+				if (this.plugin.settings.lmstudioModel) {
+					dropdown.addOption(
+						this.plugin.settings.lmstudioModel,
+						this.plugin.settings.lmstudioModel
+					);
+				}
+				dropdown
+					.setValue(this.plugin.settings.lmstudioModel)
 					.onChange(async (value) => {
-						this.plugin.settings.apiKey = value;
+						this.plugin.settings.lmstudioModel = value;
 						await this.plugin.saveSettings();
 					});
 			});
 
-		// Completion model
-		new Setting(containerEl)
-			.setName(t("settingsCompletionModel"))
-			.setDesc(t("settingsCompletionModelDesc"))
-			.addDropdown((dropdown) => {
-				for (const model of ZHIPU_MODEL_LIST) {
-					dropdown.addOption(model, model);
-				}
-				dropdown
-					.setValue(this.plugin.settings.completionModel)
-					.onChange(async (value) => {
-						this.plugin.settings.completionModel =
-							value as ZhipuModel;
-						await this.plugin.saveSettings();
-					});
-			});
+			// Add fetch button
+			lmstudioModelSetting.addExtraButton((button) => {
+				button
+					.setIcon("refresh-cw")
+					.setTooltip(t("fetchModels"))
+					.onClick(async () => {
+						try {
+							const models = await fetchLmStudioModels(
+								this.plugin.settings.lmstudioBaseUrl
+							);
+							if (models.length === 0) {
+								new Notice(t("fetchModelsFailed"));
+								return;
+							}
 
-		// Generation model
-		new Setting(containerEl)
-			.setName(t("settingsGenerationModel"))
-			.setDesc(t("settingsGenerationModelDesc"))
-			.addDropdown((dropdown) => {
-				for (const model of ZHIPU_MODEL_LIST) {
-					dropdown.addOption(model, model);
-				}
-				dropdown
-					.setValue(this.plugin.settings.generationModel)
-					.onChange(async (value) => {
-						this.plugin.settings.generationModel =
-							value as ZhipuModel;
-						await this.plugin.saveSettings();
+							// Update dropdown options
+							if (modelDropdown) {
+								const selectEl = modelDropdown.selectEl;
+								selectEl.empty();
+								for (const model of models) {
+									selectEl.createEl("option", {
+										value: model,
+										text: model,
+									});
+								}
+								// Restore current value if still in list
+								if (
+									models.includes(
+										this.plugin.settings.lmstudioModel
+									)
+								) {
+									selectEl.value =
+										this.plugin.settings.lmstudioModel;
+								} else {
+									const firstModel = models[0];
+									if (firstModel) {
+										selectEl.value = firstModel;
+										this.plugin.settings.lmstudioModel =
+											firstModel;
+										await this.plugin.saveSettings();
+									}
+								}
+							}
+
+							new Notice(
+								t("fetchModelsSuccess").replace(
+									"{count}",
+									String(models.length)
+								)
+							);
+						} catch {
+							new Notice(t("fetchModelsFailed"));
+						}
 					});
 			});
+		}
 
 		// Response language
 		new Setting(containerEl)

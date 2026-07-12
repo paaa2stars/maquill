@@ -2,14 +2,14 @@ import type { Editor, MarkdownView, App } from "obsidian";
 import { Notice } from "obsidian";
 import type { EditorView } from "@codemirror/view";
 import type { MaquillSettings } from "./settings";
-import { callZhipuCompletion } from "./zhipu-service";
+import type { LLMService } from "./main";
 import { InlineCompletionManager } from "./ui/candidate-text";
 import { t } from "./utils/i18n";
 
 /**
  * System prompt for word/sentence completion
  */
-const SYSTEM_PROMPT = `
+export const COMPLETION_SYSTEM_PROMPT = `
 你是一个写作补全助手。你的唯一任务是在插入位置补全最小必要内容（一个词或一句话），使前后文本在语义和语法上自然连贯。
 
 要求：
@@ -21,7 +21,7 @@ const SYSTEM_PROMPT = `
 /**
  * Build user prompt for completion with context
  */
-function buildCompletionUserPrompt(prefix: string, postfix: string): string {
+export function buildCompletionUserPrompt(prefix: string, postfix: string): string {
 	return `
 【前文】
 ${prefix}
@@ -188,7 +188,8 @@ export async function complete(
 	app: App,
 	settings: MaquillSettings,
 	completionManager: InlineCompletionManager,
-	getEditorView: (view: MarkdownView) => EditorView | null
+	getEditorView: (view: MarkdownView) => EditorView | null,
+	service: LLMService
 ): Promise<void> {
 	try {
 		const notice = new Notice(t("noticeGeneratingCompletion"), 0);
@@ -212,33 +213,15 @@ export async function complete(
 		}
 
 		// Validate API configuration
-		if (!settings.apiKey) {
+		if (settings.provider === "zhipu" && !settings.apiKey) {
 			notice.hide();
 			new Notice(t("noticeConfigureApiKey"));
 			return;
 		}
 
-		// Call LLM API for completion
-		const response = await callZhipuCompletion(settings.apiKey, {
-			model: settings.completionModel,
-			messages: [
-				{
-					role: "system",
-					content: SYSTEM_PROMPT,
-				},
-				{
-					role: "user",
-					content: buildCompletionUserPrompt(prefix, postfix),
-				},
-			],
-			thinking: { type: "disabled" },
-			max_tokens: 1024,
-		});
+		// Call LLM service for completion
+		const rawSuggestion = (await service.complete(prefix, postfix)) || "";
 		notice.hide();
-
-		// Extract and post-process content from response
-		const rawSuggestion =
-			response.choices[0]?.message?.content?.trim() || "";
 		const suggestion = postProcess(rawSuggestion, prefix, postfix);
 
 		if (!suggestion) {
