@@ -7,13 +7,13 @@ import {
 	WorkspaceLeaf,
 } from "obsidian";
 import type { EditorView } from "@codemirror/view";
-import type { MaquillSettings } from "./settings";
-import type { LLMService } from "./main";
-import { InlineCompletionManager } from "./ui/candidate-text";
-import { ThinkingView, THINKING_VIEW_TYPE } from "./ui/thinking-view";
-import { PromptModal } from "./ui/prompt-modal";
-import { isChineseLanguage } from "./utils/language";
-import { t } from "./utils/i18n";
+import type { MaquillSettings } from "../settings";
+import type { LLMService } from "../types";
+import { InlineCompletionManager } from "../ui/candidate-text";
+import { ThinkingView, THINKING_VIEW_TYPE } from "../ui/thinking-view";
+import { PromptModal } from "../ui/prompt-modal";
+import { isChineseLanguage } from "../utils/language";
+import { t } from "../utils/i18n";
 
 /**
  * System prompt for text generation

@@ -1,11 +1,11 @@
 import type { App, Editor } from "obsidian";
 import { Notice, MarkdownView } from "obsidian";
 import type { MaquillSettings } from "../settings";
-import type { LLMService } from "../main";
+import type { LLMService } from "../types";
 import { t } from "../utils/i18n";
 import { showResult } from "./result-modal";
-import * as ToolbarActions from "../toolbar-actions";
-import type { GrammarCheckResult, ToolbarAction } from "../toolbar-actions";
+import * as ToolbarActions from "../features/toolbar-actions";
+import type { GrammarCheckResult, ToolbarAction } from "../features/toolbar-actions";
 
 export type ToolbarActionConfig = {
 	id: ToolbarAction;
@@ -16,7 +16,8 @@ export type ToolbarActionConfig = {
 		text: string,
 		app: App,
 		settings: MaquillSettings,
-		service: LLMService
+		service: LLMService,
+		onFirstChunk?: (chunk: string) => void
 	) => Promise<string | string[] | GrammarCheckResult>;
 };
 
@@ -29,40 +30,40 @@ export const TOOLBAR_ACTIONS: Record<ToolbarAction, ToolbarActionConfig> = {
 		label: t("toolbarActionSynonym"),
 		processingMessage: t("toolbarProcessingSynonym"),
 		icon: "≈",
-		execute: (text: string, _app: App, settings: MaquillSettings, service: LLMService) =>
-			ToolbarActions.getSynonyms(text, settings, service),
+		execute: (text: string, _app: App, settings: MaquillSettings, service: LLMService, onFirstChunk?: (chunk: string) => void) =>
+			ToolbarActions.getSynonyms(text, settings, service, onFirstChunk),
 	},
 	antonym: {
 		id: "antonym",
 		label: t("toolbarActionAntonym"),
 		processingMessage: t("toolbarProcessingAntonym"),
 		icon: "≠",
-		execute: (text: string, _app: App, settings: MaquillSettings, service: LLMService) =>
-			ToolbarActions.getAntonyms(text, settings, service),
+		execute: (text: string, _app: App, settings: MaquillSettings, service: LLMService, onFirstChunk?: (chunk: string) => void) =>
+			ToolbarActions.getAntonyms(text, settings, service, onFirstChunk),
 	},
 	translate: {
 		id: "translate",
 		label: t("toolbarActionTranslate"),
 		processingMessage: t("toolbarProcessingTranslate"),
 		icon: "🌐",
-		execute: (text: string, _app: App, settings: MaquillSettings, service: LLMService) =>
-			ToolbarActions.translate(text, settings, service),
+		execute: (text: string, _app: App, settings: MaquillSettings, service: LLMService, onFirstChunk?: (chunk: string) => void) =>
+			ToolbarActions.translate(text, settings, service, onFirstChunk),
 	},
 	explain: {
 		id: "explain",
 		label: t("toolbarActionExplain"),
 		processingMessage: t("toolbarProcessingExplain"),
 		icon: "?",
-		execute: (text: string, _app: App, settings: MaquillSettings, service: LLMService) =>
-			ToolbarActions.explain(text, settings, service),
+		execute: (text: string, _app: App, settings: MaquillSettings, service: LLMService, onFirstChunk?: (chunk: string) => void) =>
+			ToolbarActions.explain(text, settings, service, onFirstChunk),
 	},
 	grammarCheck: {
 		id: "grammarCheck",
 		label: t("toolbarActionGrammarCheck"),
 		processingMessage: t("toolbarProcessingGrammarCheck"),
 		icon: "✓",
-		execute: (text: string, _app: App, settings: MaquillSettings, service: LLMService) =>
-			ToolbarActions.grammarCheck(text, settings, service),
+		execute: (text: string, _app: App, settings: MaquillSettings, service: LLMService, onFirstChunk?: (chunk: string) => void) =>
+			ToolbarActions.grammarCheck(text, settings, service, onFirstChunk),
 	},
 };
 
@@ -259,11 +260,18 @@ export class SelectionToolbar {
 
 		try {
 			const notice = new Notice(action.processingMessage, 0);
+			let firstChunkReceived = false;
 			const result = await action.execute(
 				selectedText,
 				this.app,
 				this.settings,
-				this.service
+				this.service,
+				() => {
+					if (!firstChunkReceived) {
+						firstChunkReceived = true;
+						notice.hide();
+					}
+				}
 			);
 			notice.hide();
 

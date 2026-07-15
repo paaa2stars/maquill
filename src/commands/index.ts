@@ -1,5 +1,5 @@
 import type MaquillPlugin from "../main";
-import type { LLMService } from "../main";
+import type { LLMService } from "../types";
 import { completeCommand } from "./complete";
 import { acceptCompletionCommand } from "./accept-completion";
 import { rejectCompletionCommand } from "./reject-completion";

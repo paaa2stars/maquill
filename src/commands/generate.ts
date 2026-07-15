@@ -1,7 +1,7 @@
 import { Editor, MarkdownView } from "obsidian";
 import type MaquillPlugin from "../main";
-import type { LLMService } from "../main";
-import * as Generation from "../generation";
+import type { LLMService } from "../types";
+import * as Generation from "../features/generation";
 import { t } from "../utils/i18n";
 
 export const generateCommand = (plugin: MaquillPlugin, service: LLMService) => {

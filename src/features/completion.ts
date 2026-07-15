@@ -1,10 +1,10 @@
 import type { Editor, MarkdownView, App } from "obsidian";
 import { Notice } from "obsidian";
 import type { EditorView } from "@codemirror/view";
-import type { MaquillSettings } from "./settings";
-import type { LLMService } from "./main";
-import { InlineCompletionManager } from "./ui/candidate-text";
-import { t } from "./utils/i18n";
+import type { MaquillSettings } from "../settings";
+import type { LLMService } from "../types";
+import { InlineCompletionManager } from "../ui/candidate-text";
+import { t } from "../utils/i18n";
 
 /**
  * System prompt for word/sentence completion

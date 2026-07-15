@@ -1,7 +1,7 @@
 import { Component, Editor, MarkdownRenderer, Notice } from "obsidian";
 import type { App } from "obsidian";
 import { t } from "../utils/i18n";
-import { type GrammarCheckResult, type ToolbarAction } from "../toolbar-actions";
+import { type GrammarCheckResult, type ToolbarAction } from "../features/toolbar-actions";
 
 export function showResult(
 	app: App,

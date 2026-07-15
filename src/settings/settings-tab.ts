@@ -1,51 +1,19 @@
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
-import type MaquillPlugin from "./main";
-import { ZHIPU_MODEL_LIST, type ZhipuModel } from "./zhipu-service";
-import { fetchLmStudioModels } from "./lmstudio-service";
-import { TOOLBAR_ACTIONS } from "./ui/selection-toolbar";
-import { t } from "./utils/i18n";
+import type MaquillPlugin from "../main";
+import {
+	ZHIPU_MODEL_LIST,
+	fetchLmStudioModels,
+	type ZhipuModel,
+} from "../services";
+import { TOOLBAR_ACTIONS } from "../ui/selection-toolbar";
+import { t } from "../utils/i18n";
 import {
 	LANGUAGE_CODE_TO_NATIVE_NAME,
 	type LanguageOption,
-} from "./utils/language";
-import { FolderSuggest } from "./ui/path-suggest";
-import type { ToolbarAction } from "./toolbar-actions";
-
-export type ModelProvider = "zhipu" | "lmstudio";
-
-export type MaquillSettings = {
-	provider: ModelProvider;
-	apiKey: string;
-	completionModel: ZhipuModel;
-	generationModel: ZhipuModel;
-	toolbarActions: ToolbarAction[];
-	enableSelectionToolbar: boolean;
-	responseLanguage: LanguageOption;
-	translationTargetLanguage: LanguageOption;
-	generationSavePath: string;
-	lmstudioBaseUrl: string;
-	lmstudioModel: string;
-};
-
-export const DEFAULT_SETTINGS: MaquillSettings = {
-	provider: "lmstudio",
-	apiKey: "",
-	completionModel: "glm-4.7",
-	generationModel: "glm-4.7",
-	toolbarActions: [
-		"synonym",
-		"antonym",
-		"translate",
-		"explain",
-		"grammarCheck",
-	],
-	enableSelectionToolbar: true,
-	responseLanguage: "follow-display",
-	translationTargetLanguage: "follow-display",
-	generationSavePath: "generation_history",
-	lmstudioBaseUrl: "http://localhost:1234",
-	lmstudioModel: "",
-};
+} from "../utils/language";
+import { FolderSuggest } from "../ui/path-suggest";
+import type { ToolbarAction } from "../features/toolbar-actions";
+import type { ModelProvider } from "./settings";
 
 export class MaquillSettingTab extends PluginSettingTab {
 	plugin: MaquillPlugin;
