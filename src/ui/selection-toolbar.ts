@@ -9,8 +9,9 @@ import type { GrammarCheckResult, ToolbarAction } from "../features/toolbar-acti
 
 export type ToolbarActionConfig = {
 	id: ToolbarAction;
-	label: string;
-	processingMessage: string;
+	// 惰性求值，确保读取到最新的界面语言设置
+	label: () => string;
+	processingMessage: () => string;
 	icon: string;
 	execute: (
 		text: string,
@@ -27,40 +28,40 @@ export type ToolbarActionConfig = {
 export const TOOLBAR_ACTIONS: Record<ToolbarAction, ToolbarActionConfig> = {
 	synonym: {
 		id: "synonym",
-		label: t("toolbarActionSynonym"),
-		processingMessage: t("toolbarProcessingSynonym"),
+		label: () => t("toolbarActionSynonym"),
+		processingMessage: () => t("toolbarProcessingSynonym"),
 		icon: "≈",
 		execute: (text: string, _app: App, settings: MaquillSettings, service: LLMService, onFirstChunk?: (chunk: string) => void) =>
 			ToolbarActions.getSynonyms(text, settings, service, onFirstChunk),
 	},
 	antonym: {
 		id: "antonym",
-		label: t("toolbarActionAntonym"),
-		processingMessage: t("toolbarProcessingAntonym"),
+		label: () => t("toolbarActionAntonym"),
+		processingMessage: () => t("toolbarProcessingAntonym"),
 		icon: "≠",
 		execute: (text: string, _app: App, settings: MaquillSettings, service: LLMService, onFirstChunk?: (chunk: string) => void) =>
 			ToolbarActions.getAntonyms(text, settings, service, onFirstChunk),
 	},
 	translate: {
 		id: "translate",
-		label: t("toolbarActionTranslate"),
-		processingMessage: t("toolbarProcessingTranslate"),
+		label: () => t("toolbarActionTranslate"),
+		processingMessage: () => t("toolbarProcessingTranslate"),
 		icon: "🌐",
 		execute: (text: string, _app: App, settings: MaquillSettings, service: LLMService, onFirstChunk?: (chunk: string) => void) =>
 			ToolbarActions.translate(text, settings, service, onFirstChunk),
 	},
 	explain: {
 		id: "explain",
-		label: t("toolbarActionExplain"),
-		processingMessage: t("toolbarProcessingExplain"),
+		label: () => t("toolbarActionExplain"),
+		processingMessage: () => t("toolbarProcessingExplain"),
 		icon: "?",
 		execute: (text: string, _app: App, settings: MaquillSettings, service: LLMService, onFirstChunk?: (chunk: string) => void) =>
 			ToolbarActions.explain(text, settings, service, onFirstChunk),
 	},
 	grammarCheck: {
 		id: "grammarCheck",
-		label: t("toolbarActionGrammarCheck"),
-		processingMessage: t("toolbarProcessingGrammarCheck"),
+		label: () => t("toolbarActionGrammarCheck"),
+		processingMessage: () => t("toolbarProcessingGrammarCheck"),
 		icon: "✓",
 		execute: (text: string, _app: App, settings: MaquillSettings, service: LLMService, onFirstChunk?: (chunk: string) => void) =>
 			ToolbarActions.grammarCheck(text, settings, service, onFirstChunk),
@@ -154,7 +155,7 @@ export class SelectionToolbar {
 			// Label
 			const label = document.createElement("span");
 			label.className = "maquill-toolbar-label";
-			label.textContent = action.label;
+			label.textContent = action.label();
 			button.appendChild(label);
 
 			button.onclick = () => {
@@ -259,7 +260,7 @@ export class SelectionToolbar {
 		this.hide();
 
 		try {
-			const notice = new Notice(action.processingMessage, 0);
+			const notice = new Notice(action.processingMessage(), 0);
 			let firstChunkReceived = false;
 			const result = await action.execute(
 				selectedText,
@@ -279,14 +280,14 @@ export class SelectionToolbar {
 			showResult(
 				this.app,
 				action.id,
-				action.label,
+				action.label(),
 				selectedText,
 				result,
 				editor
 			);
 		} catch (error) {
 			new Notice(
-				`${action.label}${t("toolbarFailed")}: ${
+				`${action.label()}${t("toolbarFailed")}: ${
 					error instanceof Error ? error.message : String(error)
 				}`
 			);

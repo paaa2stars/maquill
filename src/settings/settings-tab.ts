@@ -13,7 +13,7 @@ import {
 } from "../utils/language";
 import { FolderSuggest } from "../ui/path-suggest";
 import type { ToolbarAction } from "../features/toolbar-actions";
-import type { ModelProvider } from "./settings";
+import type { ModelProvider, UiLanguage } from "./settings";
 
 export class MaquillSettingTab extends PluginSettingTab {
 	plugin: MaquillPlugin;
@@ -27,6 +27,27 @@ export class MaquillSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 
 		containerEl.empty();
+
+		// UI language
+		new Setting(containerEl)
+			.setName(t("settingsUiLanguage"))
+			.setDesc(t("settingsUiLanguageDesc"))
+			.addDropdown((dropdown) => {
+				dropdown
+					.addOption(
+						"follow-display",
+						t("settingsLanguageFollowDisplay")
+					)
+					.addOption("zh-CN", t("settingsUiLanguageZh"))
+					.addOption("en", t("settingsUiLanguageEn"))
+					.setValue(this.plugin.settings.uiLanguage)
+					.onChange(async (value) => {
+						this.plugin.settings.uiLanguage = value as UiLanguage;
+						await this.plugin.saveSettings();
+						// 用新语言重新渲染设置页
+						this.display();
+					});
+			});
 
 		// Provider selection
 		new Setting(containerEl)
@@ -329,7 +350,7 @@ export class MaquillSettingTab extends PluginSettingTab {
 
 			// 工具名称
 			const labelEl = itemEl.createSpan("maquill-action-label");
-			labelEl.textContent = `${action.icon} ${action.label}`;
+			labelEl.textContent = `${action.icon} ${action.label()}`;
 
 			// 启用开关
 			new Setting(itemEl)
