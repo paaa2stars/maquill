@@ -12,6 +12,7 @@ import { ThinkingView, THINKING_VIEW_TYPE } from "./ui/thinking-view";
 import { SelectionToolbar } from "./ui/selection-toolbar";
 import { registerCommands } from "./commands";
 import { createService } from "./services";
+import { setUiLanguage } from "./utils/i18n";
 import type { EditorView } from "@codemirror/view";
 
 export default class MaquillPlugin extends Plugin {
@@ -112,10 +113,12 @@ export default class MaquillPlugin extends Plugin {
 			DEFAULT_SETTINGS,
 			(await this.loadData()) as Partial<MaquillSettings>
 		);
+		setUiLanguage(this.settings.uiLanguage);
 	}
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+		setUiLanguage(this.settings.uiLanguage);
 		// 刷新工具栏以应用新设置（重建按钮/顺序）
 		this.selectionToolbar?.refresh();
 	}

@@ -4,7 +4,10 @@ import type { ToolbarAction } from "../features/toolbar-actions";
 
 export type ModelProvider = "zhipu" | "lmstudio";
 
+export type UiLanguage = "follow-display" | "zh-CN" | "en";
+
 export type MaquillSettings = {
+	uiLanguage: UiLanguage;
 	provider: ModelProvider;
 	apiKey: string;
 	completionModel: ZhipuModel;
@@ -19,6 +22,7 @@ export type MaquillSettings = {
 };
 
 export const DEFAULT_SETTINGS: MaquillSettings = {
+	uiLanguage: "follow-display",
 	provider: "lmstudio",
 	apiKey: "",
 	completionModel: "glm-4.7",
@@ -33,7 +37,7 @@ export const DEFAULT_SETTINGS: MaquillSettings = {
 	enableSelectionToolbar: true,
 	responseLanguage: "follow-display",
 	translationTargetLanguage: "follow-display",
-	generationSavePath: "generation_history",
+	generationSavePath: "generations",
 	lmstudioBaseUrl: "http://localhost:1234",
 	lmstudioModel: "",
 };

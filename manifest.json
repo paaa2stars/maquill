@@ -6,5 +6,5 @@
 	"description": "An LLM writing assistant that helps your ideas come to life.",
 	"author": "paaa",
 	"authorUrl": "https://paaa.io",
-	"isDesktopOnly": false
+	"isDesktopOnly": true
 }

@@ -1,9 +1,16 @@
 import { getLanguage } from "obsidian";
+import type { UiLanguage } from "../settings/settings";
 
 /**
  * UI text translations
  */
 type Translations = {
+	// Settings - UI language
+	settingsUiLanguage: string;
+	settingsUiLanguageDesc: string;
+	settingsUiLanguageZh: string;
+	settingsUiLanguageEn: string;
+
 	// Settings headings
 	settingsLanguageModelConfig: string;
 	settingsSelectionToolbar: string;
@@ -115,6 +122,12 @@ type Translations = {
 };
 
 const ZH_CN: Translations = {
+	// Settings - UI language
+	settingsUiLanguage: "界面语言",
+	settingsUiLanguageDesc: "插件 UI 使用的语言",
+	settingsUiLanguageZh: "简体中文",
+	settingsUiLanguageEn: "English",
+
 	// Settings headings
 	settingsLanguageModelConfig: "语言模型配置",
 	settingsSelectionToolbar: "选择工具栏",
@@ -226,6 +239,12 @@ const ZH_CN: Translations = {
 };
 
 const EN: Translations = {
+	// Settings - UI language
+	settingsUiLanguage: "Interface language",
+	settingsUiLanguageDesc: "Language used for the plugin UI",
+	settingsUiLanguageZh: "简体中文",
+	settingsUiLanguageEn: "English",
+
 	// Settings headings
 	settingsLanguageModelConfig: "Language model configuration",
 	settingsSelectionToolbar: "Selection toolbar",
@@ -340,10 +359,23 @@ const EN: Translations = {
 };
 
 /**
+ * Plugin-level UI language override; "follow-display" falls back to
+ * Obsidian's display language
+ */
+let uiLanguageOverride: UiLanguage = "follow-display";
+
+export function setUiLanguage(language: UiLanguage): void {
+	uiLanguageOverride = language;
+}
+
+/**
  * Get translation for current language
  */
 export function t(key: keyof Translations): string {
-	const locale = getLanguage();
-	// Default to Chinese, switch to English if Obsidian is not using Chinese
-	return locale.startsWith("zh") ? ZH_CN[key] : EN[key];
+	const language =
+		uiLanguageOverride === "follow-display"
+			? getLanguage()
+			: uiLanguageOverride;
+	// Default to Chinese, switch to English if not using Chinese
+	return language.startsWith("zh") ? ZH_CN[key] : EN[key];
 }
